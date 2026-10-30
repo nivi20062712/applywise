@@ -1,95 +1,109 @@
-# ApplyWise — Evidence-Based Career Readiness Platform
+# ApplyWise — Evidence-Based Career Readiness Copilot
 
-ApplyWise is an evidence-based career readiness web application that computes skill verification status in code (`verified`, `declared`, `missing`) and powers its flagship **AI Career Readiness Copilot** using **NVIDIA Nemotron models on Nebius Token Factory**.
+**Live demo:** https://applywise-career-agent.netlify.app
+**Demo login:** `demo@applywise.local` / `applywise-demo`
+**License:** [MIT](LICENSE)
+
+ApplyWise helps job seekers and students see how ready they really are for a role. Skill status (`verified`, `declared`, `missing`) is **computed in code from attached proof** (GitHub repos, certificates, project files, URLs), never guessed by an LLM. On top of that deterministic layer sits an **AI Career Readiness Copilot powered by NVIDIA Nemotron models served through Nebius Token Factory**.
+
+Hackathon track: NVIDIA Nemotron + Nebius Token Factory.
 
 ---
 
-## Nebius Token Factory AI Setup
+## How we use NVIDIA Nemotron
 
-### 1. Environment Variables
-Copy `.env.example` to `.env` and configure your Nebius Token Factory credentials:
+All LLM calls go through `server/nebiusAi.ts` and use two Nemotron models, routed by task:
+
+| Tier | Model (env var) | Used for |
+|---|---|---|
+| **Ultra** | `nvidia/nemotron-3-ultra-550b-a55b` (`NEMOTRON_ULTRA_MODEL`) | Role comparisons (e.g. product engineer vs. government scientist tracks), 2-hour weekend project design, the 7-day "Close the gap" proof roadmap, and any chat question about planning, comparing, roadmaps, "why" or "how" |
+| **Fast** | `nvidia/nemotron-3-nano-omni` (`NEMOTRON_FAST_MODEL`) | Suggestion chips, honest résumé phrasing and "Honest Rewrite", "Why this score?", recruiter summaries for the Proof Passport, and short explanations |
+
+Routing lives in `src/utils/copilotEngine.ts` (`resolveCopilotModelRoute`, `routeQuestionModelTier`). If the Ultra model is unavailable, requests fall back to the Fast model with a visible notice.
+
+**Grounding.** Every Copilot answer is built from the logged-in user's *Proof Vault* (verified proofs, declared skills, target role). The system prompt tells the model to separate what is proven from what is only claimed, so it does not inflate résumés.
+
+**Transparency.** An *Inference Inspector* in the UI shows which model tier handled each call and why it was chosen.
+
+## Where Nebius Token Factory helped
+
+Nebius Token Factory is the only Nebius service we use. It served the Nemotron models as an OpenAI-compatible API, which shaped the build in these ways:
+
+- **One integration, both models.** The official `openai` SDK is pointed at `https://api.tokenfactory.nebius.com/v1/`. Switching between the Ultra and Fast Nemotron models is a model-ID change, so the fast/deep routing logic stayed small.
+- **Config instead of code.** Base URL and both model IDs come from environment variables, so we could swap or retune models without touching code.
+- **Startup verification.** On boot the server calls `GET /v1/models`, logs whether each configured model exists, and falls back to an available Nemotron model with a clear warning if one is missing (`verifyNebiusModelsOnStartup`).
+- **Streaming.** `POST /api/ai/chat` streams tokens to the browser over Server-Sent Events, so long Ultra-model answers start appearing right away.
+- **Structured output.** `POST /api/ai/structured` requests JSON for the suggestion chips and AI boosts, with deterministic fallbacks built in code if a call fails.
+- **Safety rails.** Per-user rate limiting (30 requests per 60 seconds) and timeouts around every model call. The API key stays on the server and is never sent to the browser.
+
+An NVIDIA API key (`nvapi-...`) is also supported: the server then routes to NVIDIA's OpenAI-compatible endpoint (`https://integrate.api.nvidia.com/v1`).
+
+## Other services
+
+- **Tavily** (`server/tavily.ts`): live job search (`GET /api/jobs`), job-description extraction when a site blocks scraping (`POST /api/jd-fetch-url`), web context for the Copilot, and market demand for missing skills (`POST /api/skill-demand`).
+- **Netlify** (static hosting + Functions via `serverless-http`).
+
+## Features
+
+- Skill evidence matrix with computed `verified` / `declared` / `missing` status
+- Role readiness score and tier, with a 7-day proof plan and 4-phase career roadmap
+- Job description match analysis and live job search
+- Résumé Studio with honest, evidence-backed rewrites
+- Document and image upload checks, GitHub repo proof review
+- **Proof Passport**: a public, read-only, revocable page (`/p/:token`) that shows verified skills only, with no contact details, résumé text or unverified skill names
+
+## Tech stack
+
+React 19, Vite, Tailwind CSS 4, Express, SQLite (`better-sqlite3`), OpenAI SDK (for Token Factory), Tavily, Netlify Functions.
+
+## Setup (local)
+
+Requirements: Node.js 22 and a Nebius Token Factory API key.
 
 ```bash
-cp .env.example .env
-```
-
-Required environment variables (never exposed to the browser):
-
-```dotenv
-NEBIUS_API_KEY="your_nebius_token_factory_api_key_here"
-NEBIUS_BASE_URL="https://api.tokenfactory.nebius.com/v1/"
-NEMOTRON_ULTRA_MODEL="nvidia/nemotron-3-ultra-550b-a55b"
-NEMOTRON_FAST_MODEL="nvidia/nemotron-3-nano-omni"
-```
-
-### 2. Startup Verification & Model Routing
-- On server startup, ApplyWise calls `GET https://api.tokenfactory.nebius.com/v1/models` once via the OpenAI-compatible SDK (`server/nebiusAi.ts`), logs whether `NEMOTRON_ULTRA_MODEL` and `NEMOTRON_FAST_MODEL` exist, and falls back to the fast model with a clear warning if one is missing.
-- **Model Routing**:
-  - **FAST (`NEMOTRON_FAST_MODEL`)**: Quick suggestion chips (#1 fastest skills, #4 honest résumé phrasing), Résumé Studio *"Honest Rewrite"*, Job Match *"Why this score?"*, and short explanations.
-  - **ULTRA (`NEMOTRON_ULTRA_MODEL`)**: Role comparisons (#3 Enterprise Product vs UPSC / NIC Scientist-B), 2-hour weekend project design (#2), and Skill Readiness *"Close the gap"* 7-day proof roadmap.
-
-### 3. Running Locally
-
-```bash
+git clone https://github.com/nivi20062712/applywise.git
+cd applywise
 npm install
-npm run dev
+cp .env.example .env     # then fill in your keys
+npm run dev              # http://localhost:3000
 ```
 
-### 4. Backend AI Endpoints
-- `POST /api/ai/chat`: Server-Sent Events (SSE) streaming endpoint grounded in the logged-in user's Proof Vault.
-- `POST /api/ai/structured`: Structured JSON endpoint for the 4 suggestion chips (`chip_fastest_skills`, `chip_weekend_project`, `chip_compare_roles`, `chip_honest_resume`) and the 3 product AI boosts (`honest_rewrite`, `why_this_score`, `close_the_gap`).
-- `GET /api/ai/models-status`: Returns startup `GET /v1/models` verification state and the user's Proof Vault summary.
+Environment variables (see `.env.example`):
 
----
+| Variable | Purpose |
+|---|---|
+| `NEBIUS_API_KEY` | Nebius Token Factory key (server-side only) |
+| `NEBIUS_BASE_URL` | `https://api.tokenfactory.nebius.com/v1/` |
+| `NEMOTRON_ULTRA_MODEL` | `nvidia/nemotron-3-ultra-550b-a55b` |
+| `NEMOTRON_FAST_MODEL` | `nvidia/nemotron-3-nano-omni` |
+| `TAVILY_API_KEY` | Live web search and extraction |
+| `APP_URL` | Public URL of the app (e.g. `http://localhost:3000`) |
 
-## Proof Passport (Public Verified Profiles)
+Without `NEBIUS_API_KEY` the app still runs, but AI features are offline.
 
-ApplyWise provides a public, read-only **Proof Passport** (`/p/:token`) for candidates to share verified technical credentials directly with recruiters without requiring authentication:
+Other commands:
 
-- **What it shows**:
-  - Candidate display name (first name only if enabled by user, otherwise generic `"Verified candidate"`)
-  - Target role, readiness score (0–100%), and readiness tier badge
-  - Verified skills accompanied by attached proof titles, artifact type icons, and links to public repositories/deployments
-  - Count of remaining self-declared skills (number only, no skill names)
-  - Optional 3-sentence recruiter summary generated by Nemotron Fast from verified proofs
-  - Clear attribution: *"Verified by ApplyWise content analysis, not self-declared"*
-- **What it never shows**:
-  - Email addresses, phone numbers, full legal names, or contact info
-  - Résumé text, uploaded file names, or raw document contents
-  - Job applications, interview history, internal analysis logs, or user IDs
-  - Names of unverified, self-declared, or missing skills
-  - Protected by strict server-side allow-listing, `Cache-Control: no-store`, and `X-Robots-Tag: noindex` headers.
-- **How revocation works**:
-  - The owner can revoke their public passport at any time via the *"Share my Passport"* dialog.
-  - Revocation is immediate: all subsequent requests to the public URL return HTTP 404 with a friendly revoked notice.
-- **Database persistence note**:
-  - In serverless/ephemeral container deployments, the local SQLite database resets between container cold starts unless backed by persistent storage.
+```bash
+npm test        # unit tests (skill matching, evidence model, copilot routing, passport)
+npm run lint    # type-check
+npm run build   # production build into dist/
+```
 
----
+## Deploy to Netlify
 
-## Tavily Real-Time Web Search & Extraction
+1. Push this repo to GitHub and import it in Netlify. Build settings come from `netlify.toml`.
+2. Add the six environment variables above (mark the two API keys as secret).
+3. Deploy. Use the demo login above.
 
-ApplyWise integrates live web queries and site content extraction via **Tavily** (`server/tavily.ts`):
+Note: SQLite runs from `/tmp` on Netlify, so new accounts reset on cold starts. The seeded demo account always returns.
 
-1. **Environment Configuration**:
-   ```dotenv
-   TAVILY_API_KEY="your_tavily_api_key_here"
-   ```
-   Configured on the server only (never exposed to the browser or logged).
+## API overview
 
-2. **Runtime Call Sites**:
-   - **Live Jobs Search (`GET /api/jobs`)**: Queries live 2026 hiring postings across LinkedIn, Naukri, Indeed, and Wellfound; deduplicates and renders them above featured jobs with a *"Live web results via Tavily"* badge.
-   - **Blocked Job Description Extraction (`POST /api/jd-fetch-url`)**: When a job board blocks automated HTTP fetching or requires client-side JavaScript, falls back to `tavilyExtract([url])` to retrieve the full job description.
-   - **AI Copilot Live Web Context (`POST /api/ai/chat`)**: When questions ask about market trends, hiring, salaries, or when *"Search web (Tavily)"* is toggled, searches live web context, injects top sources into the system prompt, routes to the Ultra reasoning model, and renders clickable source chips under the answer.
-   - **Missing Skill Market Demand (`POST /api/skill-demand`)**: Fetches 2026 hiring demand and employer expectations for missing skills via Tavily and summarizes in 2 sentences with Nebius Fast model.
+- `POST /api/ai/chat`: streaming Copilot chat (SSE), grounded in the Proof Vault
+- `POST /api/ai/structured`: chips (`chip_fastest_skills`, `chip_weekend_project`, `chip_compare_roles`, `chip_honest_resume`) and boosts (`honest_rewrite`, `why_this_score`, `close_the_gap`)
+- `GET /api/ai/models-status`: startup model verification state
+- `GET /api/public/passport/:token`: public Proof Passport data (allow-listed fields only)
 
+## License
 
-
----
-
-## Deploying to Netlify
-
-1. Push this repo to GitHub and import it in Netlify (build settings come from `netlify.toml`).
-2. Set environment variables: `NEBIUS_API_KEY`, `NEBIUS_BASE_URL`, `NEMOTRON_ULTRA_MODEL`, `NEMOTRON_FAST_MODEL`, `TAVILY_API_KEY`, `APP_URL`.
-3. Demo login: `demo@applywise.local` / `applywise-demo`.
-Note: SQLite runs from `/tmp` on Netlify, so new accounts reset on cold starts; the seeded demo account always returns.
+Released under the [MIT License](LICENSE).
