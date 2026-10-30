@@ -1,0 +1,235 @@
+================================================================================
+APPLYWISE — AI CAREER READINESS & EVIDENCE AGENT
+COMPLETE PROJECT PRESENTATION & VIVA / DEMO GUIDE
+================================================================================
+
+1. ELEVATOR PITCH (30-SECOND INTRODUCTION)
+--------------------------------------------------------------------------------
+"ApplyWise is a Proof-First AI Career Readiness and Skill Gap Analysis platform.
+Most job seekers and students apply to roles blindly with generic résumés, not
+knowing which exact skills they are missing or how to prove the skills they
+claim to have. ApplyWise solves this by acting as an Evidence-Driven Career
+Agent: instead of just listing keywords, it links every claimed skill to
+verifiable proof (GitHub repositories, certificates, project files, and URLs),
+calculates an objective Role Readiness Score, builds an interactive 4-Phase
+Career Roadmap and 7-Day Proof Plan with curated YouTube/Udemy/Coursera courses,
+identifies low-friction Career Pivots, tailors résumés to specific job
+descriptions, and tracks applications end-to-end."
+
+
+2. PROBLEM STATEMENT (WHY THIS PROJECT EXISTS)
+--------------------------------------------------------------------------------
+1. Keyword Inflation vs. Real Proof:
+   Candidates list dozens of skills on their résumé without evidence, leading
+   to rejections during technical screening.
+2. Blind Job Applications:
+   Students don't know their quantitative readiness score for a specific job
+   posting (e.g., Google, Microsoft, Oracle, Zoho) before applying.
+3. Static Skill Gap Advice:
+   Existing tools only tell you what skills you are missing—they don't give you
+   an actionable 7-Day Sprint Plan, a 4-Phase Career Roadmap, or direct links
+   to learn those skills on YouTube, Udemy, and Coursera.
+4. Unclear Career Pivot Pathways:
+   When a candidate isn't ready for their primary target role, they don't know
+   which adjacent IT roles (e.g., pivoting from Frontend to Full Stack or QA
+   Automation) best leverage their existing transferable skills.
+
+
+3. CORE FEATURES & MODULES (WHAT WE BUILT)
+--------------------------------------------------------------------------------
+A. Workspace Overview (Command Center)
+   - Displays a personalized welcome banner with the user's active Target Role.
+   - Real-time KPI summary cards: Verified Skill Proofs, Uploaded Attachments,
+     Saved Job Matches, and Active Applications.
+   - Quick-navigation shortcuts to jump directly into Skill Readiness,
+     Interactive Career Roadmap, Attachments, or Real Company Job Offers.
+
+B. Skill Readiness & Proof Engine ("Skill Readiness" Tab)
+   - Interactive Role Readiness Score Gauge:
+     Calculates a real-time percentage score (bounded 5%–98%) based on matched
+     skills, proof-verified skills (+4% bonus per verified artifact), and
+     7-day sprint task completion.
+   - IT Job Role Selector (10 Curated Career Tracks):
+     Includes Software Engineer, Frontend React & TypeScript Engineer, Backend
+     Java & Spring Boot Engineer, Full Stack Developer, Data Engineer & SQL
+     Architect, Cloud & DevOps Engineer, AI & Machine Learning Engineer,
+     Cybersecurity & SecOps Analyst, QA Automation & SDET Engineer, and Site
+     Reliability Engineer (SRE).
+   - Skill Evidence Matrix:
+     Categorizes every skill as "Verified" (backed by a certificate, repo, or
+     document) or "Claimed" (needs proof). Users can attach URLs or uploaded
+     files directly to any skill.
+   - Interactive 7-Day Proof Sprint Plan:
+     Generates a day-by-day action plan to close top skill gaps, complete with
+     checkable tasks and direct learning links to YouTube, Udemy, and Coursera.
+
+C. Interactive Career Roadmap & Pivot Engine ("Career Roadmap" Tab)
+   - 4-Phase Progression Map:
+     * Phase 1 (Weeks 1–2): Core Foundations & Verified Baseline
+     * Phase 2 (Weeks 3–6): Closing Critical Skill Gaps
+     * Phase 3 (Weeks 7–9): Production Proof & Architecture Verification
+     * Phase 4 (Weeks 10–12): Target Role Interview & Offer Readiness
+   - Interactive Milestone Tracking & Role Simulator:
+     Users can check/uncheck milestones to see their Roadmap Progress % and
+     Projected Readiness % update in real time, or simulate how their skills
+     map to any of the 10 IT Career Tracks or saved Job Matches.
+   - Adjacent Career Pivot Explorer:
+     Analyzes the user's current skill foundation and ranks alternative career
+     paths into "Low Friction Pivot", "Strategic Adjacent Pivot", and "Growth
+     Stretch Pivot". Shows Transferable Skills vs. Bridge Skills to Learn,
+     estimated transition weeks, and real hiring companies.
+
+D. Attachments & Document Vault ("Attachments" Tab)
+   - Drag-and-drop file upload supporting PDF, DOCX, TXT, MD, JSON, CSV, PNG,
+     and JPG (up to 10MB) stored via Multer & SQLite metadata.
+   - Categorizes uploads into Résumé / CV, Certificate, Project Proof, or Other.
+   - One-click "Extract Text & Analyze Skills" parses uploaded documents to
+     automatically detect technical skills and add them to the user's profile.
+
+E. AI Job Match Analyzer ("Job Match" Tab)
+   - Paste any job description (or load one directly from the Job Offers board)
+     to run a deep comparison against the user's profile and verified evidence.
+   - Outputs: Overall Match Score %, Matched Skills, Missing/Gap Skills,
+     Recommended Proof Items to highlight, and a 7-Day Action Plan tailored to
+     that specific job posting.
+
+F. Live & Curated Tier-1 Company Job Offers ("Job Offers" Tab)
+   - Features 12+ real-world technology job offers from leading companies:
+     Google, Microsoft, Oracle, Zoho, Amazon, TCS, Infosys, Cisco, Salesforce,
+     Adobe, IBM, and Flipkart, plus live external job search integration.
+   - Shows real-time Skill Demand Trends across the job market.
+   - Users can click "Analyze Readiness" on any job card to immediately load
+     that role into the Job Match engine, or apply directly on LinkedIn/Naukri.
+
+G. Résumé Studio ("Résumé Studio" Tab)
+   - Live résumé editor and formatter that pulls in the user's verified skills,
+     projects, education, and experience.
+   - Includes AI-assisted bullet improvement and tailoring for target roles,
+     plus clean print/PDF export.
+
+H. Application Tracker ("Applications" Tab)
+   - Kanban / status tracker for managing job applications across stages:
+     Saved, Applied, Interviewing, Offer, and Rejected, with notes and links.
+
+
+4. SYSTEM ARCHITECTURE & TECH STACK (FOR TECHNICAL QUESTIONS)
+--------------------------------------------------------------------------------
+- Frontend:
+  * React 19 + TypeScript + Vite
+  * Tailwind CSS for responsive, dark/light theme styling
+  * Lucide React for iconography
+- Backend:
+  * Node.js + Express (`server.ts`) running as a unified full-stack server
+  * Multer for multi-format file uploads (`uploads/` directory)
+- Database & Persistence:
+  * SQLite via `better-sqlite3` (`server/db.ts`) for fast, zero-configuration
+    relational persistence.
+  * Tables: `users`, `sessions`, `profiles`, `skills`, `evidence`,
+    `job_analyses`, `applications`, and `uploads`.
+- AI & Multi-Provider Inference Engine (Nebius x NVIDIA Hackathon Architecture):
+  * NVIDIA NIM API (`https://integrate.api.nvidia.com/v1/chat/completions`) via
+    `NVIDIA_API_KEY`, powered by `meta/llama-3.3-70b-instruct` (primary) and
+    `nvidia/llama-3.1-nemotron-70b-instruct` (fallback).
+  * Nebius AI Studio API (`https://api.studio.nebius.ai/v1/chat/completions`) via
+    `NEBIUS_API_KEY`, running `meta-llama/Llama-3.3-70B-Instruct` and
+    `nvidia/Llama-3_1-Nemotron-70B-Instruct-HF`.
+  * Google Gemini API (`@google/genai` SDK in `server/analyzer.ts`) as secondary
+    cloud fallback.
+  * Deterministic Fallback & Skill Matcher Engine (`src/utils/skillMatcher.ts`):
+    Ensures 100% reliability and instant calculations for skill extraction,
+    readiness scoring, 7-day sprint generation, 4-phase roadmaps, and career
+    pivot ranking even if offline or without external API latency.
+
+
+5. STEP-BY-STEP LIVE DEMO SCRIPT (HOW TO PRESENT THIS IN 3–5 MINUTES)
+--------------------------------------------------------------------------------
+Step 1: Start on the Overview Tab (30 sec)
+  - Point out the clean workspace, the candidate's current Target Role, and the
+    summary metrics (Verified Skill Proofs, Attachments, Job Matches).
+
+Step 2: Show the Attachments & Auto-Skill Extraction (45 sec)
+  - Click "Attachments" in the sidebar.
+  - Upload a sample résumé or certificate (PDF/TXT) and click "Analyze Skills"
+    to show how ApplyWise automatically extracts skills from real documents.
+
+Step 3: Demonstrate Skill Readiness & Evidence Verification (1 min)
+  - Click "Skill Readiness" in the sidebar.
+  - Highlight the Role Readiness Score Gauge and switch between different IT
+    roles (e.g., Software Engineer -> Full Stack Developer).
+  - In the Skill Evidence Matrix, attach a proof item (GitHub link or uploaded
+    certificate) to a skill and show how it flips from "Claimed" to "Verified",
+    boosting the Readiness Score.
+
+Step 4: Walk Through the Interactive Career Roadmap & Pivots (1.5 min)
+  - Click "Career Roadmap" in the sidebar.
+  - Show the 4-Phase Progression Map and click "Mark Milestone Complete" (or
+    check a milestone box) to demonstrate real-time progress and readiness
+    simulation.
+  - Point out the YouTube, Udemy, and Coursera learning pills on each milestone.
+  - Scroll down to "Potential Career Pivots Based on Your Skill Gap Analysis".
+  - Show how ApplyWise highlights Transferable Skills vs. Bridge Skills, and
+    click "Simulate Roadmap" on a Low-Friction Pivot role to preview that
+    career transition instantly.
+
+Step 5: Explore Real Company Job Offers & Run Job Match (1 min)
+  - Click "Job Offers" to show curated openings at Google, Microsoft, Oracle,
+    Zoho, Amazon, etc.
+  - Click "Analyze Match" on a role to jump to "Job Match", showing the exact
+    matched vs. missing skills and tailored action plan, then save it to the
+    "Applications" tracker or tailor the résumé in "Résumé Studio".
+
+
+6. COMMON Q&A / VIVA QUESTIONS & ANSWERS
+--------------------------------------------------------------------------------
+Q1: How is the Role Readiness Score calculated?
+A1: It combines three weighted factors:
+    (1) The ratio of matched target-role skills to total required skills (up to
+        78 base points),
+    (2) A verification bonus (+4% per skill backed by concrete evidence in the
+        Evidence Vault, up to +16 points), and
+    (3) Progress on the 7-Day Proof Plan (+10 points scaled by completed tasks),
+    clamped between 5% and 98% for realism.
+
+Q2: How does the Career Pivot Engine decide which roles are "Low Friction"?
+A2: For every role in our 10-track IT catalog, the engine compares the role's
+    core skill requirements against the user's current + verified skills.
+    - If >=55% of skills transfer (or <=3 bridge skills are needed), it is
+      classified as a "Low Friction Pivot" (~3–6 weeks transition).
+    - If >=35% of skills transfer (or <=5 bridge skills are needed), it is a
+      "Strategic Adjacent Pivot" (~6–10 weeks).
+    - Otherwise, it is a "Growth Stretch Pivot".
+
+Q3: What happens if the external AI service is slow or unavailable during a demo?
+A3: We built a hybrid architecture (`server/analyzer.ts` + `src/utils/skillMatcher.ts`).
+    Alongside the Gemini AI analyzer, we have a deterministic skill-matching,
+    roadmap, and 7-day sprint engine tested with automated unit tests so the
+    application never crashes or returns empty results.
+
+--------------------------------------------------------------------------------
+7. HOW TAVILY IS USED AT RUNTIME (REAL CALL SITES)
+--------------------------------------------------------------------------------
+ApplyWise integrates live web queries and site content extraction via Tavily
+(`server/tavily.ts`) across 4 key runtime touchpoints:
+
+1. Live Job Offers Search (GET /api/jobs):
+   Queries active 2026 hiring postings across LinkedIn, Naukri, Indeed, and
+   Wellfound. Deduplicates results and displays them above featured enterprise
+   roles with a "Live web results via Tavily" badge and direct source links.
+
+2. Blocked Job Description Extraction (POST /api/jd-fetch-url):
+   When a target job URL is protected by Cloudflare/CORS, login walls, or
+   requires client-side JavaScript execution, ApplyWise transparently falls
+   back to `tavilyExtract([url])` to retrieve the clean raw job description.
+
+3. AI Career Copilot Live Web Context (POST /api/ai/chat):
+   When users ask about market salaries, hiring trends, 2026 tools, or toggle
+   "Search web (Tavily)", Tavily performs a live search. Results and summary
+   answers are injected into the system prompt, routed to the Ultra reasoning
+   model (Nemotron Ultra), and displayed with interactive source chips.
+
+4. Skill Readiness 2026 Market Demand (POST /api/skill-demand):
+   Under the Skill Readiness missing skills table, candidates can click
+   "Market demand" to fetch 2026 employer expectations and hiring trends via
+   Tavily, summarized into exactly two concise sentences by the Nebius Fast model.
+================================================================================
+

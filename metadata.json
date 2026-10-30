@@ -1,0 +1,6 @@
+{
+  "name": "ApplyWise",
+  "description": "Evidence-based career readiness agent connecting job requirements to credible proof.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

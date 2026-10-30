@@ -1,0 +1,26 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  # better-sqlite3 ships a Node-ABI-specific native binary; build and runtime must match
+  NODE_VERSION = "22"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+  # Native / worker-based modules cannot be bundled by esbuild
+  external_node_modules = ["better-sqlite3", "@napi-rs/canvas", "pdf-parse", "pdfjs-dist"]
+  # Seed database that server/db.ts copies into /tmp on cold start
+  included_files = ["applywise.db"]
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

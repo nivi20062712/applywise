@@ -1,0 +1,220 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --font-sans: 'Inter', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Core Dashboard Light Mode Palette (Matching Reference Screenshot 1) */
+  --ui-bg: #F4F4F4;
+  --ui-surface: #FFFFFF;
+  --ui-surface-subtle: #F4F4F4;
+  --ui-surface-active: #FFFFFF;
+  --ui-border: #EFEFEF;
+  --ui-text: #1A1D1F;
+  --ui-text-muted: #6F767E;
+  --ui-text-subtle: #9A9FA5;
+  --ui-primary: #2A85FF;
+  --ui-primary-hover: #0069F6;
+  --ui-primary-soft: #E8F2FF;
+  --ui-primary-soft-text: #2A85FF;
+  --ui-sidebar-bg: #FFFFFF;
+  --ui-sidebar-text: #6F767E;
+  --ui-sidebar-border: #F4F4F4;
+  --ui-sidebar-active-bg: #EFEFEF;
+  --ui-sidebar-active-text: #1A1D1F;
+  --ui-radius-card: 16px;
+}
+
+/* Core Dashboard Dark Mode Palette (Matching Reference Screenshot 2) */
+html.dark {
+  --ui-bg: #111315;
+  --ui-surface: #1A1D1F;
+  --ui-surface-subtle: #111315;
+  --ui-surface-active: #272B30;
+  --ui-border: #272B30;
+  --ui-text: #FCFCFC;
+  --ui-text-muted: #6F767E;
+  --ui-text-subtle: #9A9FA5;
+  --ui-primary: #2A85FF;
+  --ui-primary-hover: #3F91FF;
+  --ui-primary-soft: rgba(42, 133, 255, 0.16);
+  --ui-primary-soft-text: #2A85FF;
+  --ui-sidebar-bg: #1A1D1F;
+  --ui-sidebar-text: #6F767E;
+  --ui-sidebar-border: #272B30;
+  --ui-sidebar-active-bg: #272B30;
+  --ui-sidebar-active-text: #FCFCFC;
+}
+
+body {
+  margin: 0;
+  background-color: var(--ui-bg);
+  color: var(--ui-text);
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+h1, h2, h3, h4, .font-heading {
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Global Dark Mode surface overrides so all inner ApplyWise views inherit the exact Core Dark Mode */
+html.dark .bg-\[\#f4f8fc\],
+html.dark .bg-\[\#f8f9fa\],
+html.dark .bg-\[\#F4F4F4\] {
+  background-color: var(--ui-bg) !important;
+}
+
+html.dark .bg-white,
+html.dark .bg-\[\#FFFFFF\] {
+  background-color: var(--ui-surface) !important;
+}
+
+html.dark .bg-gradient-to-br,
+html.dark .bg-gradient-to-r {
+  background-image: linear-gradient(135deg, var(--ui-surface) 0%, var(--ui-surface-active) 100%) !important;
+}
+
+html.dark .bg-white\/90,
+html.dark .bg-white\/95 {
+  background-color: var(--ui-surface) !important;
+}
+
+html.dark .bg-slate-50,
+html.dark .bg-slate-50\/70,
+html.dark .bg-slate-50\/80 {
+  background-color: var(--ui-surface-subtle) !important;
+}
+
+html.dark .bg-slate-100,
+html.dark .bg-\[\#EFEFEF\] {
+  background-color: var(--ui-surface-active) !important;
+}
+
+html.dark .text-\[\#092343\],
+html.dark .text-\[\#14233c\],
+html.dark .text-\[\#10243e\],
+html.dark .text-\[\#202124\],
+html.dark .text-\[\#1A1D1F\],
+html.dark .text-slate-800,
+html.dark .text-slate-900 {
+  color: #FCFCFC !important;
+}
+
+html.dark .text-slate-700,
+html.dark .text-slate-600,
+html.dark .text-\[\#5f6368\] {
+  color: #9A9FA5 !important;
+}
+
+html.dark .text-slate-500,
+html.dark .text-slate-400 {
+  color: #6F767E !important;
+}
+
+html.dark .border-slate-200,
+html.dark .border-slate-200\/80,
+html.dark .border-slate-100,
+html.dark .border-slate-300,
+html.dark .border-\[\#dde8f2\],
+html.dark .border-\[\#d4e3f1\],
+html.dark .border-\[\#dadce0\],
+html.dark .border-\[\#EFEFEF\] {
+  border-color: var(--ui-border) !important;
+}
+
+html.dark input,
+html.dark textarea,
+html.dark select {
+  background-color: var(--ui-surface-active) !important;
+  color: #FCFCFC !important;
+  border-color: var(--ui-border) !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #6F767E !important;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 9999px;
+}
+html.dark ::-webkit-scrollbar-thumb {
+  background: #272B30;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
+
+/* Badges */
+.badge-verified {
+  background-color: #EAFAE4;
+  color: #83BF6E;
+  border: 1px solid rgba(131, 191, 110, 0.25);
+}
+html.dark .badge-verified {
+  background-color: rgba(131, 191, 110, 0.15);
+  color: #83BF6E;
+  border-color: rgba(131, 191, 110, 0.25);
+}
+
+.badge-needsproof {
+  background-color: #FFE7E4;
+  color: #FF6A55;
+  border: 1px solid rgba(255, 106, 85, 0.25);
+}
+html.dark .badge-needsproof {
+  background-color: rgba(255, 106, 85, 0.15);
+  color: #FF6A55;
+  border-color: rgba(255, 106, 85, 0.25);
+}
+
+.badge-missing {
+  background-color: #FFE7E4;
+  color: #FF6A55;
+  border: 1px solid rgba(255, 106, 85, 0.25);
+}
+html.dark .badge-missing {
+  background-color: rgba(255, 106, 85, 0.15);
+  color: #FF6A55;
+  border-color: rgba(255, 106, 85, 0.25);
+}
+
+@media print {
+  body {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+  }
+  main,
+  header,
+  nav {
+    display: none !important;
+  }
+  #applywise-printable-report {
+    display: block !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}
+
