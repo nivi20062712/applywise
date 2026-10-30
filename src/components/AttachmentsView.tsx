@@ -86,6 +86,7 @@ export const AttachmentsView: React.FC<AttachmentsViewProps> = ({
   const [isUploadCheckOpen, setIsUploadCheckOpen] = useState(false);
   const [isRunningUploadCheck, setIsRunningUploadCheck] = useState(false);
   const [activeCheckResult, setActiveCheckResult] = useState<UploadCheckResult | null>(null);
+  const [activeCheckError, setActiveCheckError] = useState<string | null>(null);
   const [activeCheckText, setActiveCheckText] = useState<string>('');
   const [activeCheckTargetSkill, setActiveCheckTargetSkill] = useState<string | undefined>(
     undefined
@@ -161,6 +162,7 @@ export const AttachmentsView: React.FC<AttachmentsViewProps> = ({
     const targetSkillForCheck = selectedCategory !== 'resume' ? linkedSkillInput : undefined;
     setActiveCheckTargetSkill(targetSkillForCheck);
     setActiveCheckResult(null);
+    setActiveCheckError(null);
     setIsRunningUploadCheck(true);
     setIsUploadCheckOpen(true);
 
@@ -173,9 +175,8 @@ export const AttachmentsView: React.FC<AttachmentsViewProps> = ({
       setActiveCheckResult(response.checkResult);
       setActiveCheckText(response.extractedText || '');
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Upload Check failed.';
-      onNotify(msg);
-      setIsUploadCheckOpen(false);
+      // Keep the review open and show the reason, rather than closing the modal silently
+      setActiveCheckError(err instanceof Error ? err.message : 'Upload Check failed.');
     } finally {
       setIsRunningUploadCheck(false);
       setUploading(false);
@@ -219,6 +220,7 @@ export const AttachmentsView: React.FC<AttachmentsViewProps> = ({
         existingEvidence: evidence,
       });
 
+    setActiveCheckError(null);
     setActiveCheckResult(existingCheck);
     setActiveCheckText(att.extracted_text || '');
     setIsUploadCheckOpen(true);
@@ -229,6 +231,7 @@ export const AttachmentsView: React.FC<AttachmentsViewProps> = ({
     setFixingAttachment(null);
     setActiveCheckTargetSkill(scenario.targetSkill);
     setActiveCheckResult(null);
+    setActiveCheckError(null);
     setIsRunningUploadCheck(true);
     setIsUploadCheckOpen(true);
 
@@ -738,6 +741,7 @@ export const AttachmentsView: React.FC<AttachmentsViewProps> = ({
         isOpen={isUploadCheckOpen}
         isRunningCheck={isRunningUploadCheck}
         checkResult={activeCheckResult}
+        checkError={activeCheckError}
         extractedText={activeCheckText}
         profile={profile}
         targetSkill={activeCheckTargetSkill}

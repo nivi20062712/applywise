@@ -37,6 +37,8 @@ export interface UploadCheckModalProps {
   isOpen: boolean;
   isRunningCheck?: boolean;
   checkResult: UploadCheckResult | null;
+  /** Set when the check itself failed (network, size limit, timeout) so the modal can explain why */
+  checkError?: string | null;
   extractedText?: string;
   profile?: Profile | null;
   targetSkill?: string;
@@ -67,6 +69,7 @@ export const UploadCheckModal: React.FC<UploadCheckModalProps> = ({
   isOpen,
   isRunningCheck = false,
   checkResult,
+  checkError = null,
   extractedText = '',
   profile,
   targetSkill,
@@ -852,8 +855,36 @@ export const UploadCheckModal: React.FC<UploadCheckModalProps> = ({
           </button>
         </div>
 
-        {/* Step 1: Progress state ("Reading… Checking name… Matching skills…") */}
-        {isRunningCheck || !checkResult ? (
+        {/* Check failed before producing a result: explain why instead of closing silently */}
+        {!isRunningCheck && !checkResult && checkError ? (
+          <div className="p-10 flex flex-col items-center justify-center text-center min-h-[340px]">
+            <div className="w-12 h-12 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 mb-4">
+              <XCircle className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900 mb-2">We couldn&apos;t check this file</h3>
+            <p className="text-sm text-slate-600 max-w-md mb-5">{checkError}</p>
+            <div className="flex items-center gap-2">
+              {onReplaceFile && (
+                <button
+                  type="button"
+                  onClick={onReplaceFile}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  Choose another file
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-3.5 py-2 rounded-lg text-xs font-semibold border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        ) : /* Step 1: Progress state ("Reading… Checking name… Matching skills…") */
+        isRunningCheck || !checkResult ? (
           <div className="p-10 flex flex-col items-center justify-center text-center min-h-[340px]">
             <div className="w-12 h-12 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mb-4 animate-pulse">
               <Sparkles className="w-6 h-6" />

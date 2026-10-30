@@ -10,6 +10,20 @@ import type {
 } from './types';
 import { preprocessImageFileForOcr } from './utils/imagePreprocess';
 
+function describeHttpFailure(status: number): string {
+  if (status === 413) {
+    return 'This file is too large to check. Please upload a file under 4 MB (or a smaller/compressed image).';
+  }
+  if (status === 502 || status === 503 || status === 504) {
+    return 'The check took too long to finish. Please try again, or upload a clearer/smaller file.';
+  }
+  return 'Server error occurred. Please try again.';
+}
+
+// Serverless request bodies are capped at ~6 MB; base64 adds ~33%, so stay comfortably below
+const MAX_UPLOAD_CHECK_FILE_BYTES = 4 * 1024 * 1024;
+const MAX_UPLOAD_CHECK_BASE64_CHARS = 5 * 1024 * 1024;
+
 export async function fetchApi<T = any>(endpoint: string, options?: RequestInit): Promise<T> {
   const token = localStorage.getItem('applywise_token') || '';
   const headers: Record<string, string> = {
@@ -32,7 +46,7 @@ export async function fetchApi<T = any>(endpoint: string, options?: RequestInit)
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(data.error || 'Server error occurred. Please try again.');
+    throw new Error(data.error || describeHttpFailure(response.status));
   }
 
   return data as T;
@@ -151,14 +165,24 @@ export async function runUploadCheckOnFile(
   // the 1600px upscaled + grayscale + contrast + adaptive-threshold preprocessed image
   const imgPrep = await preprocessImageFileForOcr(file);
   if (imgPrep.isImage && imgPrep.convertedPngBase64) {
+    if (imgPrep.convertedPngBase64.length > MAX_UPLOAD_CHECK_BASE64_CHARS) {
+      throw new Error(describeHttpFailure(413));
+    }
+    // Only send the preprocessed OCR copy when both images fit in one request
+    const preprocessedBase64 =
+      imgPrep.preprocessedPngBase64 &&
+      imgPrep.convertedPngBase64.length + imgPrep.preprocessedPngBase64.length <=
+        MAX_UPLOAD_CHECK_BASE64_CHARS
+        ? imgPrep.preprocessedPngBase64
+        : undefined;
     return fetchApi<UploadCheckApiResponse>('/upload-check', {
       method: 'POST',
       body: JSON.stringify({
         filename: file.name || imgPrep.convertedFilename,
-        mimeType: 'image/png',
+        mimeType: imgPrep.convertedMimeType || 'image/png',
         fileSize: file.size || 0,
         base64Data: imgPrep.convertedPngBase64,
-        preprocessedBase64: imgPrep.preprocessedPngBase64,
+        preprocessedBase64,
         imageMeta: {
           originalWidth: imgPrep.originalWidth,
           originalHeight: imgPrep.originalHeight,
@@ -173,6 +197,10 @@ export async function runUploadCheckOnFile(
         targetSkill: options.targetSkill,
       }),
     });
+  }
+
+  if (file.size > MAX_UPLOAD_CHECK_FILE_BYTES) {
+    throw new Error(describeHttpFailure(413));
   }
 
   // 1. Try multipart upload-check first for PDFs / DOCX / TXT
