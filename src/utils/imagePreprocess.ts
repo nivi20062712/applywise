@@ -17,6 +17,9 @@ export interface ImagePreprocessResult {
   suspectedFailureReason?: OcrFailureReason;
 }
 
+// Longest side (px) of the image sent to the Upload Check API
+const MAX_UPLOAD_IMAGE_SIDE = 2000;
+
 /**
  * Reads JPEG/JFIF EXIF orientation tag (1..8) from an ArrayBuffer.
  */
@@ -127,7 +130,8 @@ function applyExifTransform(
 }
 
 /**
- * Converts .jfif/.jpg/.webp/.png to PNG on an HTML5 canvas (with EXIF rotation fixed),
+ * Converts .jfif/.jpg/.webp/.png to a compact JPEG/PNG on an HTML5 canvas (EXIF rotation fixed,
+ * capped at 2000px),
  * and produces a preprocessed OCR version (upscaled to >= 1600px wide, grayscale,
  * increased contrast, and integral-image adaptive threshold).
  */
@@ -157,21 +161,32 @@ export async function preprocessImageFileForOcr(file: File): Promise<ImagePrepro
     const orientedH = swapDims ? rawW : rawH;
     const wasRotated = exifOrientation > 1;
 
-    // Step 1: Convert .jfif/.jpg/.webp to clean PNG on canvas with EXIF orientation fixed
+    // Cap the longest side so the upload stays well under the serverless request body limit
+    // (full-resolution phone photos encoded as PNG easily exceed 6 MB and get rejected)
+    const downscale = Math.min(1, MAX_UPLOAD_IMAGE_SIDE / Math.max(orientedW, orientedH));
+    const baseW = Math.max(1, Math.round(orientedW * downscale));
+    const baseH = Math.max(1, Math.round(orientedH * downscale));
+
+    // Step 1: Convert .jfif/.jpg/.webp to a clean image on canvas with EXIF orientation fixed
     const baseCanvas = document.createElement('canvas');
-    baseCanvas.width = orientedW;
-    baseCanvas.height = orientedH;
+    baseCanvas.width = baseW;
+    baseCanvas.height = baseH;
     const baseCtx = baseCanvas.getContext('2d');
     if (!baseCtx) {
       throw new Error('Canvas 2D context unavailable');
     }
 
     baseCtx.save();
+    baseCtx.scale(downscale, downscale);
     applyExifTransform(baseCtx, exifOrientation, rawW, rawH);
     baseCtx.drawImage(img, 0, 0, rawW, rawH);
     baseCtx.restore();
 
-    const convertedDataUrl = baseCanvas.toDataURL('image/png');
+    // JPEG keeps photos/scans compact; PNG is only used when it is actually smaller
+    const convertedJpegUrl = baseCanvas.toDataURL('image/jpeg', 0.9);
+    const convertedIsJpeg = convertedJpegUrl.startsWith('data:image/jpeg');
+    const convertedDataUrl = convertedIsJpeg ? convertedJpegUrl : baseCanvas.toDataURL('image/png');
+    const convertedMimeType = convertedIsJpeg ? 'image/jpeg' : 'image/png';
     const convertedPngBase64 = convertedDataUrl.split(',')[1] || '';
 
     // Step 2: Preprocess on a second canvas:
@@ -179,9 +194,9 @@ export async function preprocessImageFileForOcr(file: File): Promise<ImagePrepro
     // - Convert to grayscale
     // - Increase contrast
     // - Apply adaptive threshold
-    const targetW = Math.max(1600, orientedW);
-    const scale = targetW / orientedW;
-    const targetH = Math.max(1, Math.round(orientedH * scale));
+    const targetW = Math.max(1600, baseW);
+    const scale = targetW / baseW;
+    const targetH = Math.max(1, Math.round(baseH * scale));
     const wasUpscaled = targetW > orientedW;
 
     const procCanvas = document.createElement('canvas');
@@ -308,8 +323,8 @@ export async function preprocessImageFileForOcr(file: File): Promise<ImagePrepro
 
     return {
       isImage: true,
-      convertedFilename: `${cleanBase}.png`,
-      convertedMimeType: 'image/png',
+      convertedFilename: `${cleanBase}.${convertedIsJpeg ? 'jpg' : 'png'}`,
+      convertedMimeType,
       convertedPngBase64,
       preprocessedPngBase64,
       originalWidth: rawW,
